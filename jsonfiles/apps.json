@@ -218,5 +218,23 @@
     "downloadUrl": "#",
     "websiteUrl": "#",
     "featureImages": ["https://picsum.photos/id/91/270/480", "https://picsum.photos/id/92/270/480"]
+  },
+  {
+    "id": "16",
+    "name": "Crush",
+    "category": "Games",
+    "iconUrl": "https://picsum.photos/id/101/200/200",
+    "bannerUrl": "https://picsum.photos/id/41/600/300",
+    "rating": 4.5,
+    "downloads": "1.2B",
+    "description": "A legendary puzzle game loved by millions of players around the world. Switch and match Candies in this tasty puzzle adventure to progress to the next level for that sweet winning feeling!",
+    "developer": "King",
+    "downloadUrl": "#",
+    "websiteUrl": "#",
+    "featureImages": ["https://picsum.photos/id/11/270/480", "https://picsum.photos/id/12/270/480", "https://picsum.photos/id/13/270/480"],
+    "previousVersions": [
+        { "version": "1.204.0", "downloadUrl": "#" },
+        { "version": "1.203.2", "downloadUrl": "#" }
+    ]
   }
 ]
