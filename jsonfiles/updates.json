@@ -1,0 +1,28 @@
+
+[
+  {
+    "id": "update1",
+    "appId": "1",
+    "version": "1.205.1",
+    "updateDate": "2024-07-29",
+    "updateNotes": "We've made some sweet updates! Enjoy our new levels, improved performance, and bug fixes to make your Candy Crush experience even better."
+  },
+  {
+    "id": "update2",
+    "appId": "5",
+    "version": "24.07.10",
+    "updateNotes": "What's new:\n- Squashed some bugs and improved performance.\n- You can now react to messages with any emoji.\n- Huddles are now more reliable."
+  },
+  {
+    "id": "update3",
+    "appId": "12",
+    "version": "3.1.0",
+    "updateNotes": "Introducing new database templates and faster page loads. We've also fixed over 50 small bugs to make your workspace smoother."
+  },
+  {
+    "id": "update4",
+    "appId": "8",
+    "version": "2.35.0",
+    "updateNotes": "The Aubbay Surfers World Tour continues in sunny Barcelona! Explore the vibrant city streets and surf on top of the famous Gaudi-inspired buildings."
+  }
+]

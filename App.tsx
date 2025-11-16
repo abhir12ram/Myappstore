@@ -643,12 +643,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
      Promise.all([
-        fetch('./apps.json').then(res => {
-            if (!res.ok) throw new Error(`Failed to fetch apps.json: ${res.statusText}`);
+        fetch('./jsonfiles/apps.json').then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch jsonfiles/apps.json: ${res.statusText}`);
             return res.json();
         }),
-        fetch('./updates.json').then(res => {
-            if (!res.ok) throw new Error(`Failed to fetch updates.json: ${res.statusText}`);
+        fetch('./jsonfiles/updates.json').then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch jsonfiles/updates.json: ${res.statusText}`);
             return res.json();
         })
     ]).then(([appsData, updatesData]) => {
