@@ -642,13 +642,16 @@ const App: React.FC = () => {
   const [userSuggestions, setUserSuggestions] = useState('');
 
   useEffect(() => {
+    const appsUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/81d0535bf38de0f4425a63f9b0b64fc4b23059c2/apps.json';
+    const updatesUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/refs/heads/main/updates.json';
+
      Promise.all([
-        fetch('./jsonfiles/apps.json').then(res => {
-            if (!res.ok) throw new Error(`Failed to fetch jsonfiles/apps.json: ${res.statusText}`);
+        fetch(appsUrl).then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch ${appsUrl}: ${res.statusText}`);
             return res.json();
         }),
-        fetch('./jsonfiles/updates.json').then(res => {
-            if (!res.ok) throw new Error(`Failed to fetch jsonfiles/updates.json: ${res.statusText}`);
+        fetch(updatesUrl).then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch ${updatesUrl}: ${res.statusText}`);
             return res.json();
         })
     ]).then(([appsData, updatesData]) => {
