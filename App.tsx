@@ -1,4 +1,7 @@
 
+
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 // --- TYPE DEFINITIONS ---
@@ -99,7 +102,7 @@ const Rating: React.FC<{ rating: number; className?: string }> = ({ rating, clas
 
 const AppCard: React.FC<{ app: App; onClick: () => void }> = ({ app, onClick }) => (
     <div className="flex flex-col items-center space-y-2 cursor-pointer group" onClick={onClick}>
-        <img src={app.iconUrl} alt={app.name} className="w-24 h-24 rounded-3xl object-cover shadow-sm group-hover:shadow-lg transition-shadow" />
+        <img src={app.iconUrl} alt={app.name} className="w-16 h-16 rounded-full object-cover shadow-md border-2 border-white/50 group-hover:shadow-lg group-hover:scale-105 transition-all duration-200" />
         <div className="w-full px-1 text-center">
             <h3 className="font-semibold text-slate-800 text-sm truncate">{app.name}</h3>
             <p className="text-xs text-slate-500 truncate">{app.category}</p>
@@ -517,7 +520,10 @@ const UpdatesPage: React.FC<{ apps: App[]; updates: AppUpdate[]; onAppClick: (ap
     const updatesWithAppInfo = useMemo(() => {
         // FIX: The `updates` prop can be of `unknown` type from the API response.
         // A type guard is added to ensure it's an array before calling `.map()` to prevent runtime errors.
-        return (Array.isArray(updates) ? updates : []).map(update => {
+        if (!Array.isArray(updates)) {
+            return [];
+        }
+        return updates.map(update => {
             const app = apps.find(a => a.id === update.appId);
             return { ...update, app };
         }).filter(item => item.app);
@@ -531,7 +537,7 @@ const UpdatesPage: React.FC<{ apps: App[]; updates: AppUpdate[]; onAppClick: (ap
                     <div key={id} className="bg-white p-4 rounded-xl shadow-sm">
                         <div className="flex items-center justify-between">
                              <div className="flex items-center space-x-4">
-                                <img src={app!.iconUrl} alt={app!.name} className="w-16 h-16 rounded-xl" />
+                                <img src={app!.iconUrl} alt={app!.name} className="w-16 h-16 rounded-full object-cover shadow-md border-2 border-white/50" />
                                 <div>
                                     <h3 className="font-semibold text-slate-800">{app!.name}</h3>
                                     <p className="text-sm text-slate-500">Version {version}</p>
@@ -561,7 +567,7 @@ const AppDetailsPage: React.FC<{ app: App; onBack: () => void; onDownload: (app:
             </div>
             <div className="p-4 space-y-4">
                  <div className="relative z-10 flex items-end space-x-4 -mt-16">
-                    <img src={app.iconUrl} alt={app.name} className="w-24 h-24 rounded-3xl object-cover shadow-lg flex-shrink-0 border-4 border-slate-50" />
+                    <img src={app.iconUrl} alt={app.name} className="w-24 h-24 rounded-full object-cover shadow-xl flex-shrink-0 border-4 border-slate-50" />
                     <div className="relative top-2 flex-1 min-w-0 pb-2">
                         <h1 className="text-2xl font-bold text-slate-800 truncate">{app.name}</h1>
                         <p className="text-slate-500 truncate">{app.developer}</p>
