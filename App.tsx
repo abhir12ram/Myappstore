@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 // --- TYPE DEFINITIONS ---
@@ -198,7 +197,18 @@ const AuthPage: React.FC<{ onLogin: (email: string) => void }> = ({ onLogin }) =
 
         try {
             // Check if user exists
-            const searchRes = await fetch(`${SHEETDB_API_URL}/search?username=${encodeURIComponent(email)}`);
+            const searchUrl = `${SHEETDB_API_URL}/search?username=${encodeURIComponent(email)}`;
+            const searchRes = await fetch(searchUrl);
+            if (!searchRes.ok) {
+                const errorText = await searchRes.text();
+                console.error('SheetDB search failed:', {
+                    url: searchUrl,
+                    status: searchRes.status,
+                    statusText: searchRes.statusText,
+                    responseText: errorText,
+                });
+                throw new Error('Failed to search for user.');
+            }
             const existingUsers = await searchRes.json();
 
             if (existingUsers.length > 0) {
@@ -206,19 +216,31 @@ const AuthPage: React.FC<{ onLogin: (email: string) => void }> = ({ onLogin }) =
                 onLogin(email);
             } else {
                 // User doesn't exist, sign them up
-                const createRes = await fetch(SHEETDB_API_URL, {
+                const createUrl = SHEETDB_API_URL;
+                const createOptions = {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         data: [{ username: email, password }],
                     }),
-                });
-                if (!createRes.ok) throw new Error('Failed to create account.');
+                };
+                const createRes = await fetch(createUrl, createOptions);
+                if (!createRes.ok) {
+                    const errorText = await createRes.text();
+                    console.error('SheetDB account creation failed:', {
+                       url: createUrl,
+                       options: { method: 'POST', headers: createOptions.headers },
+                       status: createRes.status,
+                       statusText: createRes.statusText,
+                       responseText: errorText
+                    });
+                    throw new Error('Failed to create account.');
+                }
                 onLogin(email);
             }
         } catch (err) {
             setError('An error occurred. Please try again.');
-            console.error(err);
+            console.error("Auth error:", err);
         } finally {
             setIsLoading(false);
         }
@@ -287,16 +309,30 @@ const ProfilePage: React.FC<{
         if (!content.trim()) return;
         setIsSubmitting(true);
         setSubmitMessage('');
+        
+        const fieldName = type === 'complaint' ? 'complaints' : 'suggestion';
+        const url = `${SHEETDB_API_URL}/username/${encodeURIComponent(userEmail)}`;
+        const options = {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                data: { [fieldName]: content },
+            }),
+        };
+
         try {
-            const fieldName = type === 'complaint' ? 'complaints' : 'suggestion';
-            const res = await fetch(`${SHEETDB_API_URL}/username/${encodeURIComponent(userEmail)}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    data: { [fieldName]: content },
-                }),
-            });
-            if (!res.ok) throw new Error('Submission failed');
+            const res = await fetch(url, options);
+            if (!res.ok) {
+                const errorText = await res.text();
+                 console.error('SheetDB submission failed:', {
+                    url,
+                    options: { method: 'PUT', headers: options.headers },
+                    status: res.status,
+                    statusText: res.statusText,
+                    responseText: errorText
+                });
+                throw new Error('Submission failed');
+            }
             setSubmitMessage('Your feedback has been submitted. Thank you!');
             if (type === 'complaint') {
                 setComplaint('');
@@ -308,6 +344,7 @@ const ProfilePage: React.FC<{
             }
         } catch (error) {
             setSubmitMessage('Failed to submit feedback. Please try again.');
+            console.error("Feedback submission error:", { error, url, field: fieldName });
         } finally {
             setIsSubmitting(false);
             setTimeout(() => setSubmitMessage(''), 3000);
@@ -607,15 +644,21 @@ const App: React.FC = () => {
   const [userSuggestions, setUserSuggestions] = useState('');
 
   useEffect(() => {
-    fetch('/apps.json')
-      .then(res => res.json())
-      .then(setApps)
-      .catch(err => console.error("Failed to load apps:", err));
-
-    fetch('/updates.json')
-      .then(res => res.json())
-      .then(setUpdates)
-      .catch(err => console.error("Failed to load updates:", err));
+     Promise.all([
+        fetch('/apps.json').then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch apps.json: ${res.statusText}`);
+            return res.json();
+        }),
+        fetch('/updates.json').then(res => {
+            if (!res.ok) throw new Error(`Failed to fetch updates.json: ${res.statusText}`);
+            return res.json();
+        })
+    ]).then(([appsData, updatesData]) => {
+        setApps(appsData);
+        setUpdates(updatesData);
+    }).catch(error => {
+        console.error("Error fetching initial data:", error);
+    });
     
     const storedUser = localStorage.getItem('appStoreUser');
     if (storedUser) {
@@ -625,8 +668,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (currentUser && apps.length > 0) {
-      fetch(`${SHEETDB_API_URL}/search?username=${encodeURIComponent(currentUser)}`)
-        .then(res => res.json())
+      const url = `${SHEETDB_API_URL}/search?username=${encodeURIComponent(currentUser)}`;
+      fetch(url)
+        .then(res => {
+            if (!res.ok) {
+                 console.error('Failed to fetch user data from SheetDB', { url, status: res.status, statusText: res.statusText });
+                 return res.text().then(text => { throw new Error(text || 'SheetDB Error') });
+            }
+            return res.json();
+        })
         .then(data => {
             if (Array.isArray(data) && data.length > 0) {
                 const userData = data[0]; // Assuming username is unique
@@ -639,7 +689,7 @@ const App: React.FC = () => {
             }
         })
         .catch(err => {
-            console.error("Failed to fetch user data:", err)
+            console.error("Failed to process user data:", { error: err, url });
             setUserDownloads([]);
             setUserComplaints('');
             setUserSuggestions('');
@@ -661,7 +711,7 @@ const App: React.FC = () => {
     setCurrentUser(null);
   };
 
-  const handleDownload = (app: App) => {
+  const handleDownload = async (app: App) => {
     if (!currentUser) {
         alert("Please log in to install apps.");
         setCurrentPage('Account');
@@ -676,7 +726,8 @@ const App: React.FC = () => {
     const newDownloadsList = [...userDownloads, app];
     const newDownloadsString = newDownloadsList.map(d => d.name).join(',');
 
-    fetch(`${SHEETDB_API_URL}/username/${encodeURIComponent(currentUser)}`, {
+    const url = `${SHEETDB_API_URL}/username/${encodeURIComponent(currentUser)}`;
+    const options = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -684,18 +735,31 @@ const App: React.FC = () => {
                 'downloads': newDownloadsString,
             }
         })
-    }).then(res => {
-      if (!res.ok) {
-        throw new Error('Failed to update downloads sheet');
-      }
-      return res.json()
-    }).then(() => {
+    };
+
+    try {
+        const res = await fetch(url, options);
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error('SheetDB download update failed:', {
+                url,
+                options: { method: 'PUT', headers: options.headers },
+                status: res.status,
+                statusText: res.statusText,
+                responseText: errorText
+            });
+            throw new Error('Failed to update downloads sheet');
+        }
+        
+        await res.json();
         alert(`${app.name} installed successfully!`);
         setUserDownloads(newDownloadsList);
-    }).catch(err => {
+
+    } catch (err) {
         alert(`Failed to record installation.`);
-        console.error("Failed to record download:", err)
-    });
+        console.error("Failed to record download:", { error: err, url, downloads: newDownloadsString });
+    }
   };
 
   const handleAppClick = (app: App) => {
