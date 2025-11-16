@@ -515,11 +515,9 @@ const CategoriesPage: React.FC<{ apps: App[]; onAppClick: (app: App) => void }> 
 
 const UpdatesPage: React.FC<{ apps: App[]; updates: AppUpdate[]; onAppClick: (app: App) => void; }> = ({ apps, updates, onAppClick }) => {
     const updatesWithAppInfo = useMemo(() => {
-        // FIX: Add a type guard to ensure `updates` is an array before calling `.map()`.
-        if (!Array.isArray(updates)) {
-            return [];
-        }
-        return updates.map(update => {
+        // FIX: The `updates` prop can be of `unknown` type from the API response.
+        // A type guard is added to ensure it's an array before calling `.map()` to prevent runtime errors.
+        return (Array.isArray(updates) ? updates : []).map(update => {
             const app = apps.find(a => a.id === update.appId);
             return { ...update, app };
         }).filter(item => item.app);
@@ -645,11 +643,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
      Promise.all([
-        fetch('/apps.json').then(res => {
+        fetch('./apps.json').then(res => {
             if (!res.ok) throw new Error(`Failed to fetch apps.json: ${res.statusText}`);
             return res.json();
         }),
-        fetch('/updates.json').then(res => {
+        fetch('./updates.json').then(res => {
             if (!res.ok) throw new Error(`Failed to fetch updates.json: ${res.statusText}`);
             return res.json();
         })
