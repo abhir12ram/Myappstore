@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 // --- TYPE DEFINITIONS ---
@@ -648,8 +644,8 @@ const App: React.FC = () => {
   const [userSuggestions, setUserSuggestions] = useState('');
 
   useEffect(() => {
-    const appsUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/81d0535bf38de0f4425a63f9b0b64fc4b23059c2/apps.json';
-    const updatesUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/refs/heads/main/updates.json';
+    const appsUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/main/apps.json';
+    const updatesUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/main/updates.json';
 
      Promise.all([
         fetch(appsUrl).then(res => {
