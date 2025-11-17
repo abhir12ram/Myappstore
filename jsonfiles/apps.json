@@ -221,6 +221,24 @@
   },
   {
     "id": "16",
+    "name": "MCQ test",
+    "category": "tools",
+    "iconUrl": "https://picsum.photos/id/101/200/200",
+    "bannerUrl": "https://picsum.photos/id/41/600/300",
+    "rating": 4.7,
+    "downloads": "1.8B",
+    "description": "A legendary puzzle game loved by millions of players around the world. Switch and match Candies in this tasty puzzle adventure to progress to the next level for that sweet winning feeling!",
+    "developer": "ujjal",
+    "downloadUrl": "#",
+    "websiteUrl": "#",
+    "featureImages": ["https://picsum.photos/id/11/270/480", "https://picsum.photos/id/12/270/480", "https://picsum.photos/id/13/270/480"],
+    "previousVersions": [
+        { "version": "1.3", "downloadUrl": "#" },
+        { "version": "1.2", "downloadUrl": "#" }
+    ]
+  },
+  {
+    "id": "17",
     "name": "Crush",
     "category": "Games",
     "iconUrl": "https://picsum.photos/id/101/200/200",
