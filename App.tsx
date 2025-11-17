@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 // FIX: Import AppDetailsPage component and shared types from AppDetails.tsx to avoid code duplication.
 import AppDetailsPage, { App, AppCategory } from './AppDetails.tsx';
@@ -14,6 +11,11 @@ interface AppUpdate {
   version: string;
   updateDate: string;
   updateNotes:string;
+}
+
+interface FeedbackItem {
+  text: string;
+  timestamp: string;
 }
 
 type Page = 'Home' | 'Categories' | 'Updates' | 'Account';
@@ -279,12 +281,12 @@ const ProfilePage: React.FC<{
     onLogout: () => void; 
     downloadedApps: App[]; 
     onAppClick: (app: App) => void;
-    complaints: string;
-    suggestions: string;
+    complaints: FeedbackItem[];
+    suggestions: FeedbackItem[];
 }> = ({ userEmail, onLogout, downloadedApps, onAppClick, complaints: initialComplaints, suggestions: initialSuggestions }) => {
     const [activeSection, setActiveSection] = useState<string | null>(null);
-    const [complaint, setComplaint] = useState('');
-    const [suggestion, setSuggestion] = useState('');
+    const [newComplaint, setNewComplaint] = useState('');
+    const [newSuggestion, setNewSuggestion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitMessage, setSubmitMessage] = useState('');
 
@@ -301,14 +303,22 @@ const ProfilePage: React.FC<{
         setIsSubmitting(true);
         setSubmitMessage('');
         
-        const fieldName = type === 'complaint' ? 'complaints' : 'suggestion';
+        const newFeedbackItem: FeedbackItem = {
+            text: content,
+            timestamp: new Date().toISOString(),
+        };
+
+        const isComplaint = type === 'complaint';
+        const currentList = isComplaint ? currentComplaints : currentSuggestions;
+        const newList = [...currentList, newFeedbackItem];
+        const payload = JSON.stringify(newList);
+
+        const fieldName = isComplaint ? 'complaints' : 'suggestion';
         const url = `${SHEETDB_API_URL}/username/${encodeURIComponent(userEmail)}`;
         const options = {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                data: { [fieldName]: content },
-            }),
+            body: JSON.stringify({ data: { [fieldName]: payload } }),
         };
 
         try {
@@ -325,13 +335,12 @@ const ProfilePage: React.FC<{
                 throw new Error('Submission failed');
             }
             setSubmitMessage('Your feedback has been submitted. Thank you!');
-            if (type === 'complaint') {
-                setComplaint('');
-                setCurrentComplaints(content);
-            }
-            if (type === 'suggestion') {
-                setSuggestion('');
-                setCurrentSuggestions(content);
+            if (isComplaint) {
+                setNewComplaint('');
+                setCurrentComplaints(newList);
+            } else {
+                setNewSuggestion('');
+                setCurrentSuggestions(newList);
             }
         } catch (error) {
             setSubmitMessage('Failed to submit feedback. Please try again.');
@@ -359,24 +368,36 @@ const ProfilePage: React.FC<{
                    )}
                 </AccordionItem>
                 <AccordionItem title="Submit a Complaint" id="complaint" icon={<BugAntIcon className="w-6 h-6 text-red-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-                    {currentComplaints && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                            <p className="font-semibold text-sm text-red-800">Your last complaint:</p>
-                            <p className="text-slate-600 text-sm whitespace-pre-wrap">{currentComplaints}</p>
-                        </div>
-                    )}
-                    <textarea value={complaint} onChange={e => setComplaint(e.target.value)} rows={4} placeholder={currentComplaints ? "Submit a new complaint to replace the old one." : "Please describe the issue..."} className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                    <button onClick={() => handleFeedbackSubmit('complaint', complaint)} disabled={isSubmitting} className="mt-2 w-full bg-red-500 text-white font-semibold py-2 rounded-md hover:bg-red-600 disabled:bg-red-300">Submit</button>
+                    <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
+                        {currentComplaints.length > 0 ? (
+                             currentComplaints.slice().reverse().map((item, index) => (
+                                <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-md">
+                                    <p className="text-slate-600 text-sm whitespace-pre-wrap">{item.text}</p>
+                                    <p className="text-xs text-slate-400 text-right mt-1">{new Date(item.timestamp).toLocaleString()}</p>
+                                </div>
+                             ))
+                        ) : (
+                            <p className="text-slate-500 text-center text-sm py-2">No complaints submitted yet.</p>
+                        )}
+                    </div>
+                    <textarea value={newComplaint} onChange={e => setNewComplaint(e.target.value)} rows={4} placeholder="Please describe the issue..." className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                    <button onClick={() => handleFeedbackSubmit('complaint', newComplaint)} disabled={isSubmitting} className="mt-2 w-full bg-red-500 text-white font-semibold py-2 rounded-md hover:bg-red-600 disabled:bg-red-300">Submit</button>
                 </AccordionItem>
                  <AccordionItem title="Make a Suggestion" id="suggestion" icon={<LightBulbIcon className="w-6 h-6 text-yellow-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
-                    {currentSuggestions && (
-                         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                            <p className="font-semibold text-sm text-yellow-800">Your last suggestion:</p>
-                            <p className="text-slate-600 text-sm whitespace-pre-wrap">{currentSuggestions}</p>
-                        </div>
-                    )}
-                    <textarea value={suggestion} onChange={e => setSuggestion(e.target.value)} rows={4} placeholder={currentSuggestions ? "Submit a new suggestion to replace the old one." : "What can we improve?"} className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                    <button onClick={() => handleFeedbackSubmit('suggestion', suggestion)} disabled={isSubmitting} className="mt-2 w-full bg-yellow-500 text-white font-semibold py-2 rounded-md hover:bg-yellow-600 disabled:bg-yellow-300">Submit</button>
+                    <div className="mb-4 space-y-2 max-h-48 overflow-y-auto">
+                        {currentSuggestions.length > 0 ? (
+                             currentSuggestions.slice().reverse().map((item, index) => (
+                                <div key={index} className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                                    <p className="text-slate-600 text-sm whitespace-pre-wrap">{item.text}</p>
+                                    <p className="text-xs text-slate-400 text-right mt-1">{new Date(item.timestamp).toLocaleString()}</p>
+                                </div>
+                             ))
+                        ) : (
+                             <p className="text-slate-500 text-center text-sm py-2">No suggestions submitted yet.</p>
+                        )}
+                    </div>
+                    <textarea value={newSuggestion} onChange={e => setNewSuggestion(e.target.value)} rows={4} placeholder="What can we improve?" className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                    <button onClick={() => handleFeedbackSubmit('suggestion', newSuggestion)} disabled={isSubmitting} className="mt-2 w-full bg-yellow-500 text-white font-semibold py-2 rounded-md hover:bg-yellow-600 disabled:bg-yellow-300">Submit</button>
                 </AccordionItem>
                 <AccordionItem title="About Us" id="about" icon={<InformationCircleIcon className="w-6 h-6 text-slate-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                    <p className="text-slate-600 text-sm">Welcome to the App Store Discovery, your number one source for all things apps. We're dedicated to giving you the very best of mobile applications, with a focus on quality, user experience, and innovation.</p>
@@ -492,14 +513,13 @@ const UpdatesPage: React.FC<{ apps: App[]; updates: AppUpdate[]; onAppClick: (ap
     const updatesWithAppInfo = useMemo(() => {
         // FIX: The `updates` prop can be of `unknown` type from the API response.
         // A type guard is added to ensure it's an array before calling `.map()` to prevent runtime errors.
-// FIX: Restructured the logic to ensure TypeScript correctly infers `updates` as an array before calling `.map()`.
-        if (Array.isArray(updates)) {
-            return updates.map(update => {
-                const app = apps.find(a => a.id === update.appId);
-                return { ...update, app };
-            }).filter(item => item.app);
+        if (!Array.isArray(updates)) {
+            return [];
         }
-        return [];
+        return updates.map(update => {
+            const app = apps.find(a => a.id === update.appId);
+            return { ...update, app };
+        }).filter(item => item.app);
     }, [apps, updates]);
 
     return (
@@ -537,8 +557,8 @@ const App: React.FC = () => {
   const [selectedApp, setSelectedApp] = useState<App | null>(null);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [userDownloads, setUserDownloads] = useState<App[]>([]);
-  const [userComplaints, setUserComplaints] = useState('');
-  const [userSuggestions, setUserSuggestions] = useState('');
+  const [userComplaints, setUserComplaints] = useState<FeedbackItem[]>([]);
+  const [userSuggestions, setUserSuggestions] = useState<FeedbackItem[]>([]);
 
   useEffect(() => {
     const appsUrl = 'https://raw.githubusercontent.com/Bipulbarman/Alljsonfiles/main/apps.json';
@@ -579,6 +599,23 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const parseFeedback = (feedbackString: string | undefined): FeedbackItem[] => {
+    if (!feedbackString) {
+        return [];
+    }
+    try {
+        const parsedData = JSON.parse(feedbackString);
+        if (Array.isArray(parsedData)) {
+            return parsedData;
+        }
+    } catch (error) {
+        // Parsing failed, assume it's a plain string.
+    }
+    // If we are here, it's either not a valid JSON, or a valid JSON that is not an array.
+    // Treat it as a single legacy feedback item.
+    return [{ text: feedbackString, timestamp: new Date(0).toISOString() }]; // Using epoch to signify old data.
+  };
+
   useEffect(() => {
     if (currentUser && apps.length > 0) {
       const url = `${SHEETDB_API_URL}/search?username=${encodeURIComponent(currentUser)}`;
@@ -597,20 +634,20 @@ const App: React.FC = () => {
                 const uniqueAppNames = [...new Set(downloadedAppNames)];
                 const downloadedAppsFull = apps.filter(app => uniqueAppNames.includes(app.name));
                 setUserDownloads(downloadedAppsFull);
-                setUserComplaints(userData.complaints || '');
-                setUserSuggestions(userData.suggestion || '');
+                setUserComplaints(parseFeedback(userData.complaints));
+                setUserSuggestions(parseFeedback(userData.suggestion));
             }
         })
         .catch(err => {
             console.error("Failed to process user data:", { error: err, url });
             setUserDownloads([]);
-            setUserComplaints('');
-            setUserSuggestions('');
+            setUserComplaints([]);
+            setUserSuggestions([]);
         });
     } else {
         setUserDownloads([]);
-        setUserComplaints('');
-        setUserSuggestions('');
+        setUserComplaints([]);
+        setUserSuggestions([]);
     }
   }, [currentUser, apps]);
   
