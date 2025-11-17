@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 // FIX: Import AppDetailsPage component and shared types from AppDetails.tsx to avoid code duplication.
 import AppDetailsPage, { App, AppCategory } from './AppDetails.tsx';
@@ -142,6 +144,29 @@ const FeaturedSlider: React.FC<{ apps: App[]; onAppClick: (app: App) => void }> 
     </div>
   );
 };
+
+const AccordionItem: React.FC<{ 
+    title: string; 
+    id: string; 
+    icon: React.ReactNode; 
+    children: React.ReactNode;
+    activeSection: string | null;
+    setActiveSection: (id: string | null) => void;
+}> = ({ title, id, icon, children, activeSection, setActiveSection }) => (
+    <div className="border-b border-slate-200">
+        <button
+            onClick={() => setActiveSection(activeSection === id ? null : id)}
+            className="w-full flex items-center justify-between p-4 text-left"
+        >
+            <div className="flex items-center space-x-3">
+                {icon}
+                <span className="font-semibold text-slate-700">{title}</span>
+            </div>
+            <svg className={`w-5 h-5 text-slate-500 transition-transform ${activeSection === id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        {activeSection === id && <div className="p-4 pt-0">{children}</div>}
+    </div>
+);
 
 
 // --- AUTH & PROFILE COMPONENTS ---
@@ -316,22 +341,6 @@ const ProfilePage: React.FC<{
             setTimeout(() => setSubmitMessage(''), 3000);
         }
     };
-
-    const AccordionItem: React.FC<{ title: string; id: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, id, icon, children }) => (
-        <div className="border-b border-slate-200">
-            <button
-                onClick={() => setActiveSection(activeSection === id ? null : id)}
-                className="w-full flex items-center justify-between p-4 text-left"
-            >
-                <div className="flex items-center space-x-3">
-                    {icon}
-                    <span className="font-semibold text-slate-700">{title}</span>
-                </div>
-                <svg className={`w-5 h-5 text-slate-500 transition-transform ${activeSection === id ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-            </button>
-            {activeSection === id && <div className="p-4 pt-0">{children}</div>}
-        </div>
-    );
     
     return (
         <div className="p-4 pb-20 space-y-6">
@@ -340,7 +349,7 @@ const ProfilePage: React.FC<{
                 <p className="text-slate-500">{userEmail}</p>
             </div>
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                <AccordionItem title="My Downloads" id="downloads" icon={<DownloadIcon className="w-6 h-6 text-blue-500" />}>
+                <AccordionItem title="My Downloads" id="downloads" icon={<DownloadIcon className="w-6 h-6 text-blue-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                    {downloadedApps.length > 0 ? (
                         <div className="grid grid-cols-4 gap-x-4 gap-y-8">
                             {downloadedApps.map(app => <AppCard key={app.id} app={app} onClick={() => onAppClick(app)} />)}
@@ -349,7 +358,7 @@ const ProfilePage: React.FC<{
                        <p className="text-slate-500 text-center py-4">You haven't downloaded any apps yet.</p>
                    )}
                 </AccordionItem>
-                <AccordionItem title="Submit a Complaint" id="complaint" icon={<BugAntIcon className="w-6 h-6 text-red-500" />}>
+                <AccordionItem title="Submit a Complaint" id="complaint" icon={<BugAntIcon className="w-6 h-6 text-red-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                     {currentComplaints && (
                         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                             <p className="font-semibold text-sm text-red-800">Your last complaint:</p>
@@ -359,7 +368,7 @@ const ProfilePage: React.FC<{
                     <textarea value={complaint} onChange={e => setComplaint(e.target.value)} rows={4} placeholder={currentComplaints ? "Submit a new complaint to replace the old one." : "Please describe the issue..."} className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                     <button onClick={() => handleFeedbackSubmit('complaint', complaint)} disabled={isSubmitting} className="mt-2 w-full bg-red-500 text-white font-semibold py-2 rounded-md hover:bg-red-600 disabled:bg-red-300">Submit</button>
                 </AccordionItem>
-                 <AccordionItem title="Make a Suggestion" id="suggestion" icon={<LightBulbIcon className="w-6 h-6 text-yellow-500" />}>
+                 <AccordionItem title="Make a Suggestion" id="suggestion" icon={<LightBulbIcon className="w-6 h-6 text-yellow-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                     {currentSuggestions && (
                          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
                             <p className="font-semibold text-sm text-yellow-800">Your last suggestion:</p>
@@ -369,10 +378,10 @@ const ProfilePage: React.FC<{
                     <textarea value={suggestion} onChange={e => setSuggestion(e.target.value)} rows={4} placeholder={currentSuggestions ? "Submit a new suggestion to replace the old one." : "What can we improve?"} className="w-full p-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                     <button onClick={() => handleFeedbackSubmit('suggestion', suggestion)} disabled={isSubmitting} className="mt-2 w-full bg-yellow-500 text-white font-semibold py-2 rounded-md hover:bg-yellow-600 disabled:bg-yellow-300">Submit</button>
                 </AccordionItem>
-                <AccordionItem title="About Us" id="about" icon={<InformationCircleIcon className="w-6 h-6 text-slate-500" />}>
+                <AccordionItem title="About Us" id="about" icon={<InformationCircleIcon className="w-6 h-6 text-slate-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                    <p className="text-slate-600 text-sm">Welcome to the App Store Discovery, your number one source for all things apps. We're dedicated to giving you the very best of mobile applications, with a focus on quality, user experience, and innovation.</p>
                 </AccordionItem>
-                 <AccordionItem title="Privacy Policy" id="privacy" icon={<ShieldCheckIcon className="w-6 h-6 text-green-500" />}>
+                 <AccordionItem title="Privacy Policy" id="privacy" icon={<ShieldCheckIcon className="w-6 h-6 text-green-500" />} activeSection={activeSection} setActiveSection={setActiveSection}>
                    <p className="text-slate-600 text-sm">Your privacy is important to us. It is App Store Discovery's policy to respect your privacy regarding any information we may collect from you across our website. We only ask for personal information when we truly need it to provide a service to you. We collect it by fair and lawful means, with your knowledge and consent.</p>
                 </AccordionItem>
             </div>
@@ -483,13 +492,14 @@ const UpdatesPage: React.FC<{ apps: App[]; updates: AppUpdate[]; onAppClick: (ap
     const updatesWithAppInfo = useMemo(() => {
         // FIX: The `updates` prop can be of `unknown` type from the API response.
         // A type guard is added to ensure it's an array before calling `.map()` to prevent runtime errors.
-        if (!Array.isArray(updates)) {
-            return [];
+// FIX: Restructured the logic to ensure TypeScript correctly infers `updates` as an array before calling `.map()`.
+        if (Array.isArray(updates)) {
+            return updates.map(update => {
+                const app = apps.find(a => a.id === update.appId);
+                return { ...update, app };
+            }).filter(item => item.app);
         }
-        return updates.map(update => {
-            const app = apps.find(a => a.id === update.appId);
-            return { ...update, app };
-        }).filter(item => item.app);
+        return [];
     }, [apps, updates]);
 
     return (
